@@ -13,7 +13,7 @@ type PingTask struct {
 	Id       uint        `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
 	Weight   int         `json:"weight" gorm:"type:int;not null;default:0;index"`
 	Name     string      `json:"name" gorm:"type:varchar(255);not null;index"`
-	Clients  StringArray `json:"clients" gorm:"type:longtext"`
+	Clients  StringArray `json:"clients" gorm:"type:text"`
 	Type     string      `json:"type" gorm:"type:varchar(12);not null;default:'icmp'"` // icmp tcp http
 	Target   string      `json:"target" gorm:"type:varchar(255);not null"`
 	Interval int         `json:"interval" gorm:"type:int;not null;default:60"` // 间隔时间
