@@ -73,7 +73,7 @@ jobs:
           if [ "${{ inputs.os }}" == "windows" ]; then
            echo "binary_extension=.exe" >> $GITHUB_ENV
           elif [ "${{ inputs.os }}" == "linux" ]; then
-           echo "binary_extension="" >> $GITHUB_ENV
+           echo "binary_extension=" >> $GITHUB_ENV
           else
            echo "Unsupported OS/ARCH combination" && exit 1
           fi
