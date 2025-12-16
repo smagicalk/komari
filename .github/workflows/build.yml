@@ -88,8 +88,9 @@ jobs:
           CGO_ENABLED: 1
           CC: zig cc -target ${{ env.ZIG_TARGET_TRIPLE }}
           GIN_MODE: release
+          binary_extension: ${{ env.binary_extension }}
         run: |
-          BINARY_NAME=komari-${{ inputs.goos }}-${{ inputs.goarch }}
+          BINARY_NAME=komari-${{ env.goos }}-${{ env.goarch }}
           # Append the appropriate executable extension based on the OS
           if [ "${{ env.binary_extension }}" != "" ]; then
             BINARY_NAME=${BINARY_NAME}${{ env.binary_extension }}
@@ -101,5 +102,5 @@ jobs:
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: komari-${{ inputs.goos }}-${{ inputs.goarch }}
-          path: komari-${{ inputs.goos }}-${{ inputs.goarch }}*
+          name: komari-${{ env.goos }}-${{ env.goarch }}
+          path: komari-${{ env.goos }}-${{ env.goarch }}*
