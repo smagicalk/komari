@@ -16,9 +16,13 @@ import (
 	"github.com/komari-monitor/komari/common"
 	"github.com/komari-monitor/komari/config"
 	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/utils"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	logutil "github.com/komari-monitor/komari/utils/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // zipDirectoryExcluding 将 srcDir 打包为 dstZip，exclude 是绝对路径集合需要排除
@@ -360,7 +364,6 @@ var (
 
 func GetDBInstance() *gorm.DB {
 	once.Do(func() {
-
 		var err error
 
 		// 在数据库初始化前执行：如果存在 ./data/backup.zip，则进行恢复逻辑
@@ -425,20 +428,27 @@ func GetDBInstance() *gorm.DB {
 				log.Printf("Failed to enable WAL mode for SQLite: %v", err)
 			}
 			instance.Exec("VACUUM;")
-			instance.Exec("PRAGMA wal_checkpoint(TRUNCATE);")
-		// case "mysql":
-		// 	// MySQL 连接
-		// 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&loc=Local",
-		// 		flags.DatabaseUser,
-		// 		flags.DatabasePass,
-		// 		flags.DatabaseHost,
-		// 		flags.DatabasePort,
-		// 		flags.DatabaseName)
-		// 	instance, err = gorm.Open(mysql.Open(dsn), logConfig)
-		// 	if err != nil {
-		// 		log.Fatalf("Failed to connect to MySQL database: %v", err)
-		// 	}
-		// 	log.Printf("Using MySQL database: %s@%s:%s/%s", flags.DatabaseUser, flags.DatabaseHost, flags.DatabasePort, flags.DatabaseName)
+		case "mysql":
+			// MySQL 连接
+			dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&loc=Local",
+				flags.DatabaseUser,
+				flags.DatabasePass,
+				flags.DatabaseHost,
+				flags.DatabasePort,
+				flags.DatabaseName)
+			instance, err = gorm.Open(mysql.Open(dsn), logConfig)
+			if err != nil {
+				log.Fatalf("Failed to connect to MySQL database: %v", err)
+			}
+			log.Printf("Using MySQL database: %s@%s:%s/%s", flags.DatabaseUser, flags.DatabaseHost, flags.DatabasePort, flags.DatabaseName)
+		case "postgres":
+			dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=prefer TimeZone=Asia/Shanghai",
+				flags.DatabaseHost,
+				flags.DatabaseUser,
+				flags.DatabasePass,
+				flags.DatabaseName,
+				flags.DatabasePort)
+			instance, err = gorm.Open(postgres.Open(dsn), logConfig)
 		default:
 			log.Fatalf("Unsupported database type: %s", flags.DatabaseType)
 		}
