@@ -90,7 +90,9 @@ jobs:
           GIN_MODE: release
           binary_extension: ${{ env.binary_extension }}
         run: |
-          BINARY_NAME=komari-${{ env.goos }}-${{ env.goarch }}
+          echo ${{ env.goos }}
+          echo ${{ env.goarch }}
+          BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
           # Append the appropriate executable extension based on the OS
           if [ "${{ env.binary_extension }}" != "" ]; then
             BINARY_NAME=${BINARY_NAME}${{ env.binary_extension }}
@@ -102,5 +104,5 @@ jobs:
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: komari-${{ env.goos }}-${{ env.goarch }}
-          path: komari-${{ env.goos }}-${{ env.goarch }}*
+          name: komari-${{ inputs.os }}-${{ inputs.arch }}
+          path: komari-${{ inputs.os }}-${{ inputs.arch }}*
