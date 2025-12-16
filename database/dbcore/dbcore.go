@@ -17,6 +17,7 @@ import (
 	"github.com/komari-monitor/komari/database/models"
 	"github.com/komari-monitor/komari/utils"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -444,6 +445,14 @@ func GetDBInstance() *gorm.DB {
 				log.Fatalf("Failed to connect to MySQL database: %v", err)
 			}
 			log.Printf("Using MySQL database: %s@%s:%s/%s", flags.DatabaseUser, flags.DatabaseHost, flags.DatabasePort, flags.DatabaseName)
+		case "postgres":
+			dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=prefer TimeZone=Asia/Shanghai",
+				flags.DatabaseHost,
+				flags.DatabaseUser,
+				flags.DatabasePass,
+				flags.DatabaseName,
+				flags.DatabasePort)
+			instance, err = gorm.Open(postgres.Open(dsn), logConfig)
 		default:
 			log.Fatalf("Unsupported database type: %s", flags.DatabaseType)
 		}
