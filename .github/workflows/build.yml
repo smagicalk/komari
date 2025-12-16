@@ -55,29 +55,29 @@ jobs:
 
       - name: Set up the environment
         run: |
-           if [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
-             echo "ZIG_TARGET_TRIPLE=x86_64-windows-gnu" >> $GITHUB_ENV
-           elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
-             echo "ZIG_TARGET_TRIPLE=aarch64-windows-gnu" >> $GITHUB_ENV
-           elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "386" ]; then
-             echo "ZIG_TARGET_TRIPLE=x86-windows-gnu" >> $GITHUB_ENV
-           elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
-             echo "ZIG_TARGET_TRIPLE=aarch64-linux-musl" >> $GITHUB_ENV
-           elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
-             echo "ZIG_TARGET_TRIPLE=x86_64-linux-musl" >> $GITHUB_ENV
-           elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "386" ]; then
-             echo "ZIG_TARGET_TRIPLE=x86-linux-musl" >> $GITHUB_ENV
-           else
-             echo "Unsupported OS/ARCH combination" && exit 1
-           fi
-          if [ "${{ inputs.os }}" == "windows" ]; then
-            echo "binary_extension=.exe" >> $GITHUB_ENV
-          elif [ "${{ inputs.os }}" == "linux" ]; then
-            echo "binary_extension="" >> $GITHUB_ENV
+          if [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-linux-musl" >> $GITHUB_ENV
           else
             echo "Unsupported OS/ARCH combination" && exit 1
           fi
-          
+          if [ "${{ inputs.os }}" == "windows" ]; then
+           echo "binary_extension=.exe" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ]; then
+           echo "binary_extension="" >> $GITHUB_ENV
+          else
+           echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+
 
       - name: Build binary
         env:
