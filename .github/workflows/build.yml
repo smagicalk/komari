@@ -52,6 +52,7 @@ jobs:
           wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
           sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
           echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
+
       - name: Set up the environment
         run: |
            if [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
