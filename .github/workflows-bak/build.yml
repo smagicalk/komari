@@ -1,62 +1,31 @@
-name: Build Binaries on Main Push and PR
-
+name: build.yml
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
-
+    inputs:
+      os:
+        type: choice
+        required: true
+        description: 'os'
+        options:
+          - windows
+          - linux
+      arch:
+        type: choice
+        required: true
+        description: 'os arch'
+        default: 'amd64'
+        options:
+          - amd64
+          - arm64
+          - 386
 jobs:
   build-binaries:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        goos: [windows, linux]
-        goarch: [amd64, arm64, 386, riscv64]
-        include:
-          # Windows
-          - goos: windows
-            goarch: amd64
-            zig_target_triple: x86_64-windows-gnu
-            binary_extension: .exe
-          - goos: windows
-            goarch: arm64
-            zig_target_triple: aarch64-windows-gnu
-            binary_extension: .exe
-          - goos: windows
-            goarch: 386
-            zig_target_triple: x86-windows-gnu
-            binary_extension: .exe
-
-          # Linux
-          - goos: linux
-            goarch: amd64
-            zig_target_triple: x86_64-linux-musl
-            binary_extension: ""
-          - goos: linux
-            goarch: arm64
-            zig_target_triple: aarch64-linux-musl
-            binary_extension: ""
-          - goos: linux
-            goarch: 386
-            zig_target_triple: x86-linux-musl
-            binary_extension: ""
-          - goos: linux
-            goarch: riscv64
-            zig_target_triple: riscv64-linux-musl
-            binary_extension: ""
-
-        exclude:
-          - goos: windows
-            goarch: riscv64
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: pgdev
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -70,15 +39,8 @@ jobs:
           npm install
           npm run build
           cd ..
-          mkdir -p public/defaultTheme/dist
-          rm -rf public/defaultTheme/dist/*
-          cp -r web/dist/* public/defaultTheme/dist/
-          cp -f web/komari-theme.json public/defaultTheme/
-          if [ -f web/preview.png ]; then cp -f web/preview.png public/defaultTheme/; fi
-          if [ -f web/perview.png ]; then cp -f web/perview.png public/defaultTheme/; fi
-          # Compatibility: ensure both filenames exist if only one is present
-          if [ -f public/defaultTheme/preview.png ] && [ ! -f public/defaultTheme/perview.png ]; then cp -f public/defaultTheme/preview.png public/defaultTheme/perview.png; fi
-          if [ -f public/defaultTheme/perview.png ] && [ ! -f public/defaultTheme/preview.png ]; then cp -f public/defaultTheme/perview.png public/defaultTheme/preview.png; fi
+          mkdir -p public/dist
+          cp -r web/dist/* public/dist/
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -93,25 +55,54 @@ jobs:
           sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
           echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
 
+      - name: Set up the environment
+        run: |
+          if [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-linux-musl" >> $GITHUB_ENV
+          else
+            echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+          if [ "${{ inputs.os }}" == "windows" ]; then
+           echo "binary_extension=.exe" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ]; then
+           echo "binary_extension=" >> $GITHUB_ENV
+          else
+           echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+
+
       - name: Build binary
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+          GOOS: ${{ inputs.os }}
+          GOARCH: ${{inputs.arch}}
           CGO_ENABLED: 1
-          CC: zig cc -target ${{ matrix.zig_target_triple }}
+          CC: zig cc -target ${{ env.ZIG_TARGET_TRIPLE }}
           GIN_MODE: release
+          binary_extension: ${{ env.binary_extension }}
         run: |
-          BINARY_NAME=komari-${{ matrix.goos }}-${{ matrix.goarch }}
+          echo ${{ env.goos }}
+          echo ${{ env.goarch }}
+          BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
           # Append the appropriate executable extension based on the OS
-          if [ "${{ matrix.binary_extension }}" != "" ]; then
-            BINARY_NAME=${BINARY_NAME}${{ matrix.binary_extension }}
+          if [ "${{ env.binary_extension }}" != "" ]; then
+            BINARY_NAME=${BINARY_NAME}${{ env.binary_extension }}
           fi
           VERSION="${{ github.sha }}"
           VERSION_HASH="${{ github.sha }}"
           go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
 
-      - name: Upload binary as artifact
+      - name: Upload binary as artifact github
         uses: actions/upload-artifact@v4
         with:
-          name: komari-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: komari-${{ matrix.goos }}-${{ matrix.goarch }}*
+          name: komari-${{ inputs.os }}-${{ inputs.arch }}
+          path: komari-${{ inputs.os }}-${{ inputs.arch }}*
