@@ -21,7 +21,7 @@ on:
       upload:
         type: boolean
         required: false
-        default: true
+        default: false
         description: 'upload'
 jobs:
   build-binaries:
@@ -115,7 +115,7 @@ jobs:
       - name: Upload binary to release
         if: ${{ inputs.upload }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
             # Define the binary name for upload
             BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.os }}
