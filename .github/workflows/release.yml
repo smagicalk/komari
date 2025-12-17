@@ -25,44 +25,44 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows, linux]
-        arch: [amd64, arm64, 386, riscv64]
+        os: [windows] # linux]
+        arch: [amd64] #, arm64, 386, riscv64]
         include:
           # Windows
           - os: windows
             arch: amd64
             zig_target_triple: x86_64-windows-gnu
             binary_extension: .exe
-          - os: windows
-            arch: arm64
-            zig_target_triple: aarch64-windows-gnu
-            binary_extension: .exe
-          - os: windows
-            arch: 386
-            zig_target_triple: x86-windows-gnu
-            binary_extension: .exe
-
-          # Linux
-          - os: linux
-            arch: amd64
-            zig_target_triple: x86_64-linux-musl
-            binary_extension: ""
-          - os: linux
-            arch: arm64
-            zig_target_triple: aarch64-linux-musl
-            binary_extension: ""
-          - os: linux
-            arch: 386
-            zig_target_triple: x86-linux-musl
-            binary_extension: ""
-          - os: linux
-            arch: riscv64
-            zig_target_triple: riscv64-linux-musl
-            binary_extension: ""
-
-        exclude:
-          - os: windows
-            arch: riscv64
+#          - os: windows
+#            arch: arm64
+#            zig_target_triple: aarch64-windows-gnu
+#            binary_extension: .exe
+#          - os: windows
+#            arch: 386
+#            zig_target_triple: x86-windows-gnu
+#            binary_extension: .exe
+#
+#          # Linux
+#          - os: linux
+#            arch: amd64
+#            zig_target_triple: x86_64-linux-musl
+#            binary_extension: ""
+#          - os: linux
+#            arch: arm64
+#            zig_target_triple: aarch64-linux-musl
+#            binary_extension: ""
+#          - os: linux
+#            arch: 386
+#            zig_target_triple: x86-linux-musl
+#            binary_extension: ""
+#          - os: linux
+#            arch: riscv64
+#            zig_target_triple: riscv64-linux-musl
+#            binary_extension: ""
+#
+#        exclude:
+#          - os: windows
+#            arch: riscv64
 
     steps:
       - name: Checkout code
@@ -106,13 +106,13 @@ jobs:
           CC: zig cc -target ${{ matrix.zig_target_triple }}
           GIN_MODE: release
         run: |
-          BINARY_NAME=komari-${{ matrix.os }}-${{ matrix.arch }}
+          BINARY_NAME=komari-${{ env.os }}-${{ env.arch }}
           if [ "${{ matrix.binary_extension }}" != "" ]; then
             BINARY_NAME=${BINARY_NAME}${{ matrix.binary_extension }}
           fi
           VERSION="${{ inputs.tag }}"
           VERSION_HASH="${{ github.sha }}" # Use commit SHA for hash
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
+          go build -trimpath -ldflags="-s -w -X github.com/smagicalpub0/komari/utils.CurrentVersion=${VERSION} -X github.com/smagicalpub0/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
 
       - name: Upload binary to release
         env:
