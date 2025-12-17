@@ -18,6 +18,11 @@ on:
           - amd64
           - arm64
           - 386
+      upload:
+        type: boolean
+        required: false
+        default: true
+        description: 'upload'
 jobs:
   build-binaries:
     runs-on: ubuntu-latest
@@ -101,8 +106,22 @@ jobs:
           VERSION_HASH="${{ github.sha }}"
           go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
 
-      - name: Upload binary as artifact
+      - name: Upload binary as artifact github
         uses: actions/upload-artifact@v4
         with:
           name: komari-${{ inputs.os }}-${{ inputs.arch }}
           path: komari-${{ inputs.os }}-${{ inputs.arch }}*
+
+      - name: Upload binary to release
+        if: ${{ inputs.upload }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            # Define the binary name for upload
+            BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.os }}
+            if [ "${{ inputs.os }}" = "windows" ]; then
+              BINARY_NAME=${BINARY_NAME}.exe
+            fi
+            # Upload the binary as a release asset using GitHub CLI
+            gh release upload ${{ github.event.release.tag_name }} $BINARY_NAME --repo ${{ github.repository }} --clobber
+        shell: bash
