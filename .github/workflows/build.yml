@@ -116,12 +116,14 @@ jobs:
         if: ${{ inputs.upload }}
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
+          upload_name: ${{ github.event.release.tag_name}}
         run: |
             # Define the binary name for upload
             BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.os }}
             if [ "${{ inputs.os }}" = "windows" ]; then
               BINARY_NAME=${BINARY_NAME}.exe
             fi
+            
             # Upload the binary as a release asset using GitHub CLI
             gh release upload ${{ github.event.release.tag_name }} $BINARY_NAME --repo ${{ github.repository }} --clobber
         shell: bash
