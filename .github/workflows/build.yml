@@ -18,6 +18,13 @@ on:
           - amd64
           - arm64
           - 386
+      tag:
+        type: choice
+        default: v1.1.3-pg
+        required: false
+        options:
+          - v1.1.3-pg
+        description: 'ref'
 jobs:
   build-binaries:
     runs-on: ubuntu-latest
@@ -25,7 +32,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: pgdev
+          ref: ${{ inputs.tag }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -73,9 +80,9 @@ jobs:
             echo "Unsupported OS/ARCH combination" && exit 1
           fi
           if [ "${{ inputs.os }}" == "windows" ]; then
-           echo "binary_extension=.exe" >> $GITHUB_ENV
+           echo "BINARY_EXTENSION=.exe" >> $GITHUB_ENV
           elif [ "${{ inputs.os }}" == "linux" ]; then
-           echo "binary_extension=" >> $GITHUB_ENV
+           echo "BINARY_EXTENSION=" >> $GITHUB_ENV
           else
            echo "Unsupported OS/ARCH combination" && exit 1
           fi
@@ -88,10 +95,8 @@ jobs:
           CGO_ENABLED: 1
           CC: zig cc -target ${{ env.ZIG_TARGET_TRIPLE }}
           GIN_MODE: release
-          binary_extension: ${{ env.binary_extension }}
+          binary_extension: ${{ env.BINARY_EXTENSION }}
         run: |
-          echo ${{ env.goos }}
-          echo ${{ env.goarch }}
           BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
           # Append the appropriate executable extension based on the OS
           if [ "${{ env.binary_extension }}" != "" ]; then
