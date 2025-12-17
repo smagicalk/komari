@@ -1,8 +1,15 @@
 name: Attach Release Binaries
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: tag
+        required: true
+        type: choice
+        options:
+          - v1.1.3-pg
+
 
 permissions:
   contents: write
@@ -60,6 +67,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -115,5 +124,5 @@ jobs:
             BINARY_NAME=${BINARY_NAME}.exe
           fi
           # Upload the binary as a release asset using GitHub CLI
-          gh release upload ${{ github.event.release.tag_name }} $BINARY_NAME --repo ${{ github.repository }}
+          gh release upload ${{ inputs.tag }} $BINARY_NAME --repo ${{ github.repository }}
         shell: bash
