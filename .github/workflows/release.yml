@@ -52,6 +52,8 @@ jobs:
 
       - name: Upload to release
         if: ${{ !env.ACT }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cmd="gh release upload ${{ inputs.tag }} "
           for entry in ./komari-*; do
