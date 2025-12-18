@@ -57,7 +57,8 @@ jobs:
           for entry in ./komari-*; do
             cmd="$cmd $entry/*"
           done
-          $(cmd --repo ${{ github.repository }} --clobber)
+          cmd="$cmd --repo ${{ github.repository }} --clobber"
+          $cmd
         shell: bash
 
 #      - run: |
