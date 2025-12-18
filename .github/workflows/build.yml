@@ -1,5 +1,21 @@
 name: build.yml
 on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        required: true
+        description: 'os [windows,linux] '
+      arch:
+        type: string
+        required: true
+        description: 'os arch [amd64,arm64,386]'
+        default: 'amd64'
+      tag:
+        type: string
+        default: v1.1.3-pg
+        required: false
+        description: 'ref'
   workflow_dispatch:
     inputs:
       os:
@@ -86,7 +102,7 @@ jobs:
           else
            echo "Unsupported OS/ARCH combination" && exit 1
           fi
-#  $(git rev-parse ${{ env.TAG }})
+      #  $(git rev-parse ${{ env.TAG }})
 
       - name: Build binary
         env:
