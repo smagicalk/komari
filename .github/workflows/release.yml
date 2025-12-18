@@ -1,65 +1,33 @@
-name: Attach Release Binaries
-
+name: build.yml
 on:
   workflow_dispatch:
     inputs:
+      os:
+        type: choice
+        required: true
+        description: 'os'
+        options:
+          - windows
+          - linux
+      arch:
+        type: choice
+        required: true
+        description: 'os arch'
+        default: 'amd64'
+        options:
+          - amd64
+          - arm64
+          - 386
       tag:
         type: choice
-        description: 'tag'
-        default: 'v1.1.3-pg'
+        default: v1.1.3-pg
+        required: false
         options:
           - v1.1.3-pg
-
-
-permissions:
-  contents: write
-  packages: write
-
+        description: 'ref'
 jobs:
-  build-and-attach-binaries:
+  build-binaries:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        os: [ windows, linux ]
-        arch: [ amd64, arm64, 386, riscv64 ]
-        include:
-          # Windows
-          - os: windows
-            arch: amd64
-            zig_target_triple: x86_64-windows-gnu
-            binary_extension: .exe
-          - os: windows
-            arch: arm64
-            zig_target_triple: aarch64-windows-gnu
-            binary_extension: .exe
-          - os: windows
-            arch: 386
-            zig_target_triple: x86-windows-gnu
-            binary_extension: .exe
-          
-          # Linux
-          - os: linux
-            arch: amd64
-            zig_target_triple: x86_64-linux-musl
-            binary_extension: ""
-          - os: linux
-            arch: arm64
-            zig_target_triple: aarch64-linux-musl
-            binary_extension: ""
-          - os: linux
-            arch: 386
-            zig_target_triple: x86-linux-musl
-            binary_extension: ""
-          - os: linux
-            arch: riscv64
-            zig_target_triple: riscv64-linux-musl
-            binary_extension: ""
-        
-        exclude:
-          - os: windows
-            arch: riscv64
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,32 +62,60 @@ jobs:
           sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
           echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
 
+      - name: Set up the environment
+        run: |
+          if [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-linux-musl" >> $GITHUB_ENV
+          else
+            echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+          if [ "${{ inputs.os }}" == "windows" ]; then
+           echo "BINARY_EXTENSION=.exe" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ]; then
+           echo "BINARY_EXTENSION=" >> $GITHUB_ENV
+          else
+           echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+      #  $(git rev-parse ${{ env.TAG }})
+
       - name: Build binary
         env:
-          os: ${{ matrix.os }}
-          arch: ${{ matrix.arch }}
+          GOOS: ${{ inputs.os }}
+          GOARCH: ${{inputs.arch}}
           CGO_ENABLED: 1
-          CC: zig cc -target ${{ matrix.zig_target_triple }}
+          CC: zig cc -target ${{ env.ZIG_TARGET_TRIPLE }}
           GIN_MODE: release
+          binary_extension: ${{ env.BINARY_EXTENSION }}
         run: |
-          BINARY_NAME=komari-${{ matrix.os }}-${{ matrix.arch }}
-          if [ "${{ matrix.binary_extension }}" != "" ]; then
-            BINARY_NAME=${BINARY_NAME}${{ matrix.binary_extension }}
+          BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
+          # Append the appropriate executable extension based on the OS
+          if [ "${{ env.binary_extension }}" != "" ]; then
+            BINARY_NAME=${BINARY_NAME}${{ env.binary_extension }}
           fi
-          VERSION="${{ inputs.tag }}"
-          VERSION_HASH="${git rev-parse ${{ inputs.tag }} }" # Use commit SHA for hash
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
+          VERSION="${{ github.sha }}"
+          VERSION_HASH="${{ github.sha }}"
+          go build -trimpath -ldflags="-s -w -X github.com/smagicalpub0/komari/utils.CurrentVersion=${VERSION} -X github.com/smagicalpub0/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
 
       - name: Upload binary to release
-        if: ${{ !env.ACT}}
+        if: ${{ !env.ACT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Define the binary name for upload
-          BINARY_NAME=komari-${{ matrix.os }}-${{ matrix.arch }}
-          if [ "${{ matrix.os }}" = "windows" ]; then
+          BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
+          if [ "${{ inputs.os }}" = "windows" ]; then
             BINARY_NAME=${BINARY_NAME}.exe
           fi
           # Upload the binary as a release asset using GitHub CLI
-          gh release upload ${{ github.event.release.tag_name }} $BINARY_NAME --repo ${{ github.repository }}
+          gh release upload ${{ inputs.tag }} $BINARY_NAME --repo ${{ github.repository }}
         shell: bash

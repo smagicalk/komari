@@ -86,7 +86,7 @@ jobs:
           else
            echo "Unsupported OS/ARCH combination" && exit 1
           fi
-
+#  $(git rev-parse ${{ env.TAG }})
 
       - name: Build binary
         env:
