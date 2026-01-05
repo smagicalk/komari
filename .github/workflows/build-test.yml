@@ -1,0 +1,129 @@
+name: build-test-self-runner.yml
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        required: true
+        description: 'os [windows,linux] '
+      arch:
+        type: string
+        required: true
+        description: 'os arch [amd64,arm64,386]'
+        default: 'amd64'
+      tag:
+        type: string
+        default: v1.1.3-pg
+        required: false
+        description: 'ref'
+  workflow_dispatch:
+    inputs:
+      os:
+        type: choice
+        required: true
+        description: 'os'
+        options:
+          - windows
+          - linux
+      arch:
+        type: choice
+        required: true
+        description: 'os arch'
+        default: 'amd64'
+        options:
+          - amd64
+          - arm64
+          - 386
+      tag:
+        type: choice
+        default: v1.1.3-pg
+        required: false
+        options:
+          - v1.1.3-pg
+        description: 'ref'
+jobs:
+  build-binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "23"
+
+      - name: Clone and build frontend
+        run: |
+          git clone https://github.com/komari-monitor/komari-web web
+          cd web
+          npm install
+          npm run build
+          cd ..
+          mkdir -p public/dist
+          cp -r web/dist/* public/dist/
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Install Zig cross-compiler toolchain
+        run: |
+          sudo apt-get update # Update apt package lists
+          sudo apt-get install -y build-essential curl
+          wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
+          sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
+          echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
+
+      - name: Set up the environment
+        run: |
+          if [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "windows" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-windows-gnu" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "arm64" ]; then
+            echo "ZIG_TARGET_TRIPLE=aarch64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "amd64" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86_64-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ] && [ "${{ inputs.arch }}" == "386" ]; then
+            echo "ZIG_TARGET_TRIPLE=x86-linux-musl" >> $GITHUB_ENV
+          else
+            echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+          if [ "${{ inputs.os }}" == "windows" ]; then
+           echo "BINARY_EXTENSION=.exe" >> $GITHUB_ENV
+          elif [ "${{ inputs.os }}" == "linux" ]; then
+           echo "BINARY_EXTENSION=" >> $GITHUB_ENV
+          else
+           echo "Unsupported OS/ARCH combination" && exit 1
+          fi
+      #  $(git rev-parse ${{ env.TAG }})
+
+      - name: Build binary
+        env:
+          GOOS: ${{ inputs.os }}
+          GOARCH: ${{inputs.arch}}
+          CGO_ENABLED: 1
+          CC: zig cc -target ${{ env.ZIG_TARGET_TRIPLE }}
+          GIN_MODE: release
+          binary_extension: ${{ env.BINARY_EXTENSION }}
+        run: |
+          BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
+          # Append the appropriate executable extension based on the OS
+          if [ "${{ env.binary_extension }}" != "" ]; then
+            BINARY_NAME=${BINARY_NAME}${{ env.binary_extension }}
+          fi
+          VERSION="${{ github.sha }}"
+          VERSION_HASH="${{ github.sha }}"
+          go build -trimpath -ldflags="-s  -w -X github.com/smagicalpub0/komari/utils.CurrentVersion=${VERSION} -X github.com/smagicalpub0/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
+
+      - name: Upload binary as artifact github
+        uses: actions/upload-artifact@v4
+        with:
+          name: komari-${{ inputs.os }}-${{ inputs.arch }}
+          path: komari-${{ inputs.os }}-${{ inputs.arch }}*
