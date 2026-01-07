@@ -72,8 +72,8 @@ jobs:
 
       - name: Install Zig cross-compiler toolchain
         run: |
-          sudo apt-get update # Update apt package lists
-          sudo apt-get install -y build-essential curl
+#          sudo apt-get update # Update apt package lists
+#          sudo apt-get install -y build-essential curl
           wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
           sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
           echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
