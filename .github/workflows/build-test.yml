@@ -43,7 +43,7 @@ on:
         description: 'ref'
 jobs:
   build-binaries:
-    runs-on: [self-hosted,hiden]
+    runs-on: [self-hosted]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
