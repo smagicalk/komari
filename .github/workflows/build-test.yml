@@ -43,7 +43,7 @@ on:
         description: 'ref'
 jobs:
   build-binaries:
-    runs-on: hiden
+    runs-on: [self-hosted,hiden]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,6 +69,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
+
       - name: Install Zig cross-compiler toolchain
         run: |
 #          sudo apt-get update # Update apt package lists
