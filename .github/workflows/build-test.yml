@@ -1,4 +1,4 @@
-name: build-test-self-runner.yml
+name: build.yml
 on:
   workflow_call:
     inputs:
@@ -43,7 +43,7 @@ on:
         description: 'ref'
 jobs:
   build-binaries:
-    runs-on: [self-hosted , hiden]
+    runs-on: [self-hosted,hiden]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -68,12 +68,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23
+          go-version: "1.23"
 
       - name: Install Zig cross-compiler toolchain
         run: |
-#          sudo apt-get update # Update apt package lists
-#          sudo apt-get install -y build-essential curl
+          sudo apt-get update # Update apt package lists
+          sudo apt-get install -y build-essential curl
           wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
           sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
           echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
