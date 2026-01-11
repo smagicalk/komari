@@ -2,7 +2,7 @@ package models
 
 type Task struct {
 	TaskId  string       `json:"task_id" gorm:"type:varchar(36);primaryKey;unique"`
-	Clients StringArray  `json:"clients" gorm:"type:text"`
+	Clients StringArray  `json:"clients" gorm:"type:jsonb"`
 	Command string       `json:"command" gorm:"type:text"`
 	Results []TaskResult `gorm:"foreignKey:TaskId;references:TaskId;constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
