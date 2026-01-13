@@ -46,7 +46,7 @@ on:
         options:
           - v1.1.3-pg
         description: 'ref'
-      run:
+      group:
         type: choice
         default: 'Default'
         required: false
@@ -56,10 +56,23 @@ on:
           - Default
           - self
           - other
+      lable:
+        type: choice
+        default: 'ubuntu:24.01'
+        required: false
+        description: 'run-on 系统'
+        options:
+          - ubuntu:24.01
+          - self-hosted
+          - 56idc
+          - dedirock
+          - 7inet
+          - jiavps
 jobs:
   build-binaries:
     runs-on:
-      group: ${{ inputs.run }}
+      group: ${{ inputs.group }}
+      labels: ${{ inputs.lable }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
