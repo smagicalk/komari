@@ -16,6 +16,11 @@ on:
         default: v1.1.3-pg
         required: false
         description: 'ref'
+      run:
+        type: string
+        default: 'Default'
+        required: false
+        description: 'run-on 系统'
   workflow_dispatch:
     inputs:
       os:
@@ -41,11 +46,20 @@ on:
         options:
           - v1.1.3-pg
         description: 'ref'
+      run:
+        type: choice
+        default: 'Default'
+        required: false
+        description: 'run-on 系统'
+        options:
+          - hearse
+          - Default
+          - self
+          - other
 jobs:
   build-binaries:
     runs-on:
-      group: hearse
-      labels: [self-hosted]
+      group: ${{ inputs.run }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
