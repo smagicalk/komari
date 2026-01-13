@@ -43,7 +43,9 @@ on:
         description: 'ref'
 jobs:
   build-binaries:
-    runs-on: [self-hosted,7inet]
+    runs-on:
+      group: hearse
+      labels: [self-hosted]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
