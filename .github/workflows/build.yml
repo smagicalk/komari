@@ -36,10 +36,11 @@ on:
           - 386
       tag:
         type: choice
-        default: v1.1.3-pg
+        default: v1.1.5-pg
         required: false
         options:
           - v1.1.3-pg
+          - v1.1.5-pg
         description: 'ref'
 jobs:
   build-binaries:
