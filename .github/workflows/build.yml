@@ -62,21 +62,31 @@ jobs:
           npm install
           npm run build
           cd ..
-          mkdir -p public/dist
-          cp -r web/dist/* public/dist/
+          mkdir -p public/defaultTheme/dist
+          rm -rf public/defaultTheme/dist/*
+          cp -r web/dist/* public/defaultTheme/dist/
+          cp -f web/komari-theme.json public/defaultTheme/
+          if [ -f web/preview.png ]; then cp -f web/preview.png public/defaultTheme/; fi
+          if [ -f web/perview.png ]; then cp -f web/perview.png public/defaultTheme/; fi
+          # Compatibility: ensure both filenames exist if only one is present
+          if [ -f public/defaultTheme/preview.png ] && [ ! -f public/defaultTheme/perview.png ]; then cp -f public/defaultTheme/preview.png public/defaultTheme/perview.png; fi
+          if [ -f public/defaultTheme/perview.png ] && [ ! -f public/defaultTheme/preview.png ]; then cp -f public/defaultTheme/perview.png public/defaultTheme/preview.png; fi
+      
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
 
-      - name: Install Zig cross-compiler toolchain
-        run: |
-          sudo apt-get update # Update apt package lists
-          sudo apt-get install -y build-essential curl
-          wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
-          sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
-          echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
+      - name: Setup Zig Compiler
+        uses: mlugg/setup-zig@v2.2.1
+#      - name: Install Zig cross-compiler toolchain
+#        run: |
+#          sudo apt-get update # Update apt package lists
+#          sudo apt-get install -y build-essential curl
+#          wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
+#          sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
+#          echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
 
       - name: Set up the environment
         run: |
