@@ -53,7 +53,7 @@ on:
         required: false
         description: 'run-on 系统'
         options:
-          - ubuntu:24.01
+          - ubuntu-latest
           - self-hosted
           - 56idc
           - dedirock
@@ -79,6 +79,7 @@ jobs:
         run: |
           git clone https://github.com/komari-monitor/komari-web web
           cd web
+          echo "NODE_OPTIONS=--dns-result-order=ipv4first" >> $GITHUB_ENV
           npm config set fetch-retries 5
           npm config set fetch-retry-factor 2
           npm config set fetch-retry-mintimeout 20000
