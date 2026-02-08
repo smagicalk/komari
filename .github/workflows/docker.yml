@@ -21,7 +21,7 @@ jobs:
 
       - name: run
         run: |
-          TAG=$(curl -s https://api.github.com/repos/smagicalpub0/komari/releases/latest | grep '"tag_name":' | head -1 | cut -d '"' -f4)
+          TAG=$(curl -s https://api.github.com/repos/smagicalk/komari/releases/latest | grep '"tag_name":' | head -1 | cut -d '"' -f4)
           curl -L -o komari https://github.com/smagicalpub0/komari/releases/download/$TAG/komari-linux-amd64
           echo "tag=$TAG" >> $GITHUB_ENV
 
