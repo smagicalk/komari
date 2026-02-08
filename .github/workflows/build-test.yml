@@ -41,21 +41,12 @@ on:
           - 386
       tag:
         type: choice
-        default: v1.1.3-pg
+        default: v1.1.5-pg
         required: false
         options:
           - v1.1.3-pg
+          - v1.1.5-pg
         description: 'ref'
-      group:
-        type: choice
-        default: 'Default'
-        required: false
-        description: 'run-on 系统'
-        options:
-          - hearse
-          - Default
-          - self
-          - other
       lable:
         type: choice
         default: 'ubuntu:24.01'
@@ -66,12 +57,12 @@ on:
           - self-hosted
           - 56idc
           - dedirock
-          - 7inet
-          - jiavps
+          - swy-mg
+          - swy-nb
+
 jobs:
   build-binaries:
     runs-on:
-      group: ${{ inputs.group }}
       labels: ${{ inputs.lable }}
     steps:
       - name: Checkout code
@@ -91,8 +82,16 @@ jobs:
           npm install
           npm run build
           cd ..
-          mkdir -p public/dist
-          cp -r web/dist/* public/dist/
+          mkdir -p public/defaultTheme/dist
+          rm -rf public/defaultTheme/dist/*
+          cp -r web/dist/* public/defaultTheme/dist/
+          cp -f web/komari-theme.json public/defaultTheme/
+          if [ -f web/preview.png ]; then cp -f web/preview.png public/defaultTheme/; fi
+          if [ -f web/perview.png ]; then cp -f web/perview.png public/defaultTheme/; fi
+          # Compatibility: ensure both filenames exist if only one is present
+          if [ -f public/defaultTheme/preview.png ] && [ ! -f public/defaultTheme/perview.png ]; then cp -f public/defaultTheme/preview.png public/defaultTheme/perview.png; fi
+          if [ -f public/defaultTheme/perview.png ] && [ ! -f public/defaultTheme/preview.png ]; then cp -f public/defaultTheme/perview.png public/defaultTheme/preview.png; fi
+          
 
       - name: Set up Go
         uses: actions/setup-go@v5
