@@ -1,0 +1,46 @@
+name: Build & Push to GHCR
+on:
+  workflow_dispatch
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }} # owner/repo
+
+jobs:
+  push_docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: 'rust'
+
+      - name: run
+        run: |
+          TAG=$(curl -s https://api.github.com/repos/smagicalpub0/komari/releases/latest | grep '"tag_name":' | head -1 | cut -d '"' -f4)
+          curl -L -o komari https://github.com/smagicalpub0/komari/releases/download/$TAG/komari-linux-amd64
+          echo "tag=$TAG" >> $GITHUB_ENV
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/smagicalk/komari-pg:${{ github.env.tag}}    
+
+          
+          
+
