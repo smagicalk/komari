@@ -16,13 +16,13 @@ import (
 	"github.com/komari-monitor/komari/common"
 	"github.com/komari-monitor/komari/config"
 	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/utils"
+	_ "github.com/komari-monitor/komari/utils"
+	logutil "github.com/komari-monitor/komari/utils/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
-	logutil "github.com/komari-monitor/komari/utils/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	_ "gorm.io/gorm/logger"
 )
 
 // zipDirectoryExcluding 将 srcDir 打包为 dstZip，exclude 是绝对路径集合需要排除
