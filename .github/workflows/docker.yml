@@ -39,7 +39,7 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            ghcr.io/smagicalk/komari-pg:${{ github.env.tag}}    
+            ghcr.io/smagicalk/komari-pg:${{env.tag}}    
 
           
           
