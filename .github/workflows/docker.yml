@@ -42,6 +42,21 @@ jobs:
           chmod +x komari
           echo "✅ 已添加可执行权限"
 
+      # 在「Get latest release tag and download komari binary」步骤后添加
+      - name: 验证komari文件位置和权限
+        run: |
+          # 打印当前工作目录
+          echo "当前工作目录：$(pwd)"
+          # 列出所有文件，确认komari存在
+          ls -lh
+          # 检查komari文件的详细信息
+          if [ -f "komari" ]; then
+            echo "✅ komari文件存在，路径：$(pwd)/komari"
+            echo "文件权限：$(ls -l komari | awk '{print $1}')"
+          else
+            echo "❌ komari文件不存在！"
+            exit 1
+          fi
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
