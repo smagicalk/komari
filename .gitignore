@@ -38,4 +38,5 @@ data
 # build
 komari
 /rust/
+**/defaultTheme/**
 
