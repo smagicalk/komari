@@ -100,8 +100,11 @@ jobs:
 
       - name: Setup Zig Compiler
         uses: mlugg/setup-zig@v2.2.1
+#        with:
+#          use-cache: 'false'
+#          cache-size-limit: '0'
 
-#      - name: Install Zig cross-compiler toolchain
+      #      - name: Install Zig cross-compiler toolchain
 #        run: |
 #          sudo apt-get update # Update apt package lists
 #          sudo apt-get install -y build-essential curl

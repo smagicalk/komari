@@ -5,11 +5,12 @@ on:
     inputs:
       tag:
         type: choice
-        default: v1.1.5-pg
+        default: v1.1.6-pg
         required: false
         options:
           - v1.1.3-pg
           - v1.1.5-pg
+          - v1.1.6-pg
         description: 'ref'
 jobs:
   build-binaries:
