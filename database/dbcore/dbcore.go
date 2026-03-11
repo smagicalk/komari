@@ -364,7 +364,6 @@ var (
 
 func GetDBInstance() *gorm.DB {
 	once.Do(func() {
-
 		var err error
 
 		// 在数据库初始化前执行：如果存在 ./data/backup.zip，则进行恢复逻辑
