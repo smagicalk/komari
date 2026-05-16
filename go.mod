@@ -23,7 +23,6 @@ require (
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.26.1
-
 )
 
 // Misuse of ServerConfig.PublicKeyCallback may cause authorization bypass in golang.org/x/crypto #1
@@ -35,6 +34,7 @@ require golang.org/x/crypto v0.39.0 // indirect
 require golang.org/x/net v0.41.0 // indirect
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
@@ -76,6 +76,5 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
