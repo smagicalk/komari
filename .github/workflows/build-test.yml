@@ -1,4 +1,4 @@
-name: build.yml
+name: build-test.yml
 on:
   workflow_call:
     inputs:
@@ -16,6 +16,11 @@ on:
         default: v2.1.3-pg
         required: false
         description: 'ref'
+      run:
+        type: string
+        default: 'Default'
+        required: false
+        description: 'run-on 系统'
   workflow_dispatch:
     inputs:
       os:
@@ -41,16 +46,25 @@ on:
         options:
           - v1.1.3-pg
           - v1.1.5-pg
-          - v1.1.6-pg
-          - v1.1.7-pg
-          - v1.1.8-pg
-          - v1.1.9-pg
-          - v1.2.0-pg
           - v2.1.3-pg
         description: 'ref'
+      lable:
+        type: choice
+        default: 'ubuntu:24.01'
+        required: false
+        description: 'run-on 系统'
+        options:
+          - ubuntu-latest
+          - self-hosted
+          - 56idc
+          - dedirock
+          - swy-mg
+          - swy-nb
+
 jobs:
   build-binaries:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: ${{ inputs.lable }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,6 +92,7 @@ jobs:
           # Compatibility: ensure both filenames exist if only one is present
           if [ -f web/public/defaultTheme/preview.png ] && [ ! -f web/public/defaultTheme/perview.png ]; then cp -f web/public/defaultTheme/preview.png web/public/defaultTheme/perview.png; fi
           if [ -f web/public/defaultTheme/perview.png ] && [ ! -f web/public/defaultTheme/preview.png ]; then cp -f web/public/defaultTheme/perview.png web/public/defaultTheme/preview.png; fi
+          
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -86,6 +101,17 @@ jobs:
 
       - name: Setup Zig Compiler
         uses: mlugg/setup-zig@v2.2.1
+#        with:
+#          use-cache: 'false'
+#          cache-size-limit: '0'
+
+      #      - name: Install Zig cross-compiler toolchain
+#        run: |
+#          sudo apt-get update # Update apt package lists
+#          sudo apt-get install -y build-essential curl
+#          wget https://ziglang.org/download/0.14.1/zig-x86_64-linux-0.14.1.tar.xz
+#          sudo tar -C /usr/local -Jxf zig-x86_64-linux-0.14.1.tar.xz
+#          echo "PATH=$PATH:/usr/local/zig-x86_64-linux-0.14.1" >> $GITHUB_ENV
 
       - name: Set up the environment
         run: |
@@ -105,13 +131,13 @@ jobs:
             echo "Unsupported OS/ARCH combination" && exit 1
           fi
           if [ "${{ inputs.os }}" == "windows" ]; then
-           echo "binary_extension=.exe" >> $GITHUB_ENV
+           echo "BINARY_EXTENSION=.exe" >> $GITHUB_ENV
           elif [ "${{ inputs.os }}" == "linux" ]; then
-           echo "binary_extension=" >> $GITHUB_ENV
+           echo "BINARY_EXTENSION=" >> $GITHUB_ENV
           else
            echo "Unsupported OS/ARCH combination" && exit 1
           fi
-
+      #  $(git rev-parse ${{ env.TAG }})
 
       - name: Build binary
         env:
@@ -120,7 +146,7 @@ jobs:
           CGO_ENABLED: 1
           CC: zig cc -target ${{ env.ZIG_TARGET_TRIPLE }}
           GIN_MODE: release
-          binary_extension: ${{ env.binary_extension }}
+          binary_extension: ${{ env.BINARY_EXTENSION }}
         run: |
           BINARY_NAME=komari-${{ inputs.os }}-${{ inputs.arch }}
           # Append the appropriate executable extension based on the OS
@@ -129,7 +155,7 @@ jobs:
           fi
           VERSION="${{ github.sha }}"
           VERSION_HASH="${{ github.sha }}"
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
+          go build -trimpath -ldflags="-s  -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
 
       - name: Upload binary as artifact github
         uses: actions/upload-artifact@v4
