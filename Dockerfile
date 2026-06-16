@@ -1,38 +1,23 @@
-FROM alpine:3.21
+FROM --platform=linux/amd64 alpine:3
 
 WORKDIR /app
 
-# Docker buildx 会在构建时自动填充这些变量
-ARG TARGETOS
-ARG TARGETARCH
+# 将 entrypoint.sh 脚本复制到容器中
+COPY entrypoint.sh .
+COPY komari .
+# 合并命令以减少层数，并赋予执行权限
+RUN apk update && \
+    apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone && apk del tzdata &&\
+    chmod +x komari && \
+    chmod +x entrypoint.sh
 
-RUN apk add --no-cache ca-certificates curl tzdata
-
-RUN set -eux; \
-    case "${TARGETARCH}" in \
-      amd64) cloudflared_arch="amd64" ;; \
-      386) cloudflared_arch="386" ;; \
-      arm64) cloudflared_arch="arm64" ;; \
-      arm) cloudflared_arch="arm" ;; \
-      *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac; \
-    curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cloudflared_arch}" -o /usr/local/bin/cloudflared; \
-    chmod +x /usr/local/bin/cloudflared
-
-COPY komari-${TARGETOS}-${TARGETARCH} /app/komari
-
-RUN chmod +x /app/komari
-
-ENV GIN_MODE=release
-ENV KOMARI_DB_TYPE=sqlite
-ENV KOMARI_DB_FILE=/app/data/komari.db
-ENV KOMARI_DB_HOST=localhost
-ENV KOMARI_DB_PORT=3306
-ENV KOMARI_DB_USER=root
-ENV KOMARI_DB_PASS=
-ENV KOMARI_DB_NAME=komari
-ENV KOMARI_LISTEN=0.0.0.0:25774
+# 声明默认的环境变量值
+# entrypoint.sh 会检查这些变量是否存在
+ENV DB_TYPE=postgres
+ENV BIND_ADDR=0.0.0.0:25774
 
 EXPOSE 25774
 
-CMD ["/app/komari", "server"]
+# 【核心修正】将容器的入口点设置为您的检查脚本
+ENTRYPOINT ["./entrypoint.sh"]
