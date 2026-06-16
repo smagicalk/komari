@@ -102,9 +102,9 @@ jobs:
 
       - name: Setup Zig Compiler
         uses: mlugg/setup-zig@v2.2.1
-#        with:
-#          use-cache: 'false'
-#          cache-size-limit: '0'
+        with:
+          use-cache: 'false'
+          cache-size-limit: '0'
 
       #      - name: Install Zig cross-compiler toolchain
 #        run: |
