@@ -257,3 +257,22 @@ func TestRunExpandsLegacyPingAllClientsTasks(t *testing.T) {
 		t.Fatalf("unexpected clients json: %s", raw)
 	}
 }
+
+func TestLegacyPingClientsJSONEncoding(t *testing.T) {
+	emptyClients, err := json.Marshal(models.StringArray{})
+	if err != nil {
+		t.Fatalf("marshal empty clients: %v", err)
+	}
+	if string(emptyClients) != `[]` {
+		t.Fatalf("unexpected empty clients json: %s", emptyClients)
+	}
+
+	allUUIDs := models.StringArray{"client-a", "client-b"}
+	allUUIDBytes, err := json.Marshal(allUUIDs)
+	if err != nil {
+		t.Fatalf("marshal expanded clients: %v", err)
+	}
+	if string(allUUIDBytes) != `["client-a","client-b"]` {
+		t.Fatalf("unexpected expanded clients json: %s", allUUIDBytes)
+	}
+}

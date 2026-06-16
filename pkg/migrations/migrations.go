@@ -411,21 +411,38 @@ func migrateLegacyPingAllClientsExpansion(db *gorm.DB) error {
 		return nil
 	}
 	if !hasTableColumn(db, "ping_tasks", "clients") {
-		if err := db.Exec("ALTER TABLE ping_tasks ADD COLUMN clients text").Error; err != nil {
+		columnType := "text"
+		if db.Dialector.Name() == "postgres" {
+			columnType = "jsonb"
+		}
+		if err := db.Exec(fmt.Sprintf("ALTER TABLE ping_tasks ADD COLUMN clients %s", columnType)).Error; err != nil {
 			return fmt.Errorf("add clients column for legacy ping task expansion: %w", err)
 		}
 	}
-	if err := db.Table("ping_tasks").
-		Where("clients IS NULL OR clients = '' OR clients = '[]' OR clients = 'null'").
-		Update("clients", models.StringArray{}).Error; err != nil {
-		return fmt.Errorf("normalize legacy ping task clients: %w", err)
+	emptyClients, err := json.Marshal(models.StringArray{})
+	if err != nil {
+		return fmt.Errorf("marshal empty legacy ping task clients: %w", err)
 	}
 
 	var pingTasks []legacyPingTask
-	if err := db.Table("ping_tasks").Select("id, clients").Where("all_clients = ?", true).Scan(&pingTasks).Error; err != nil {
+	if err := db.Table("ping_tasks").Select("id, clients").Scan(&pingTasks).Error; err != nil {
+		return fmt.Errorf("scan legacy ping tasks: %w", err)
+	}
+
+	for _, task := range pingTasks {
+		if !isLegacyPingClientsEmpty(task.Clients) {
+			continue
+		}
+		if err := db.Table("ping_tasks").Where("id = ?", task.Id).Update("clients", string(emptyClients)).Error; err != nil {
+			return fmt.Errorf("normalize legacy ping task clients: %w", err)
+		}
+	}
+
+	var allClientTasks []legacyPingTask
+	if err := db.Table("ping_tasks").Select("id, clients").Where("all_clients = ?", true).Scan(&allClientTasks).Error; err != nil {
 		return fmt.Errorf("find legacy all_clients ping tasks: %w", err)
 	}
-	if len(pingTasks) == 0 {
+	if len(allClientTasks) == 0 {
 		return nil
 	}
 
@@ -446,12 +463,16 @@ func migrateLegacyPingAllClientsExpansion(db *gorm.DB) error {
 	if len(allUUIDs) == 0 {
 		return nil
 	}
+	allUUIDBytes, err := json.Marshal(allUUIDs)
+	if err != nil {
+		return fmt.Errorf("marshal expanded legacy ping task clients: %w", err)
+	}
 
-	for _, task := range pingTasks {
+	for _, task := range allClientTasks {
 		if !isLegacyPingClientsEmpty(task.Clients) {
 			continue
 		}
-		if err := db.Table("ping_tasks").Where("id = ?", task.Id).Update("clients", allUUIDs).Error; err != nil {
+		if err := db.Table("ping_tasks").Where("id = ?", task.Id).Update("clients", string(allUUIDBytes)).Error; err != nil {
 			return fmt.Errorf("expand legacy all_clients ping task %d: %w", task.Id, err)
 		}
 	}
