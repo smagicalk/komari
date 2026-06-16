@@ -15,6 +15,7 @@ type Client struct {
 	Virtualization   string    `json:"virtualization" gorm:"type:varchar(50)"`
 	Arch             string    `json:"arch" gorm:"type:varchar(50)"`
 	CpuCores         int       `json:"cpu_cores" gorm:"type:int"`
+	CpuPhysicalCores int       `json:"cpu_physical_cores" gorm:"type:int"`
 	OS               string    `json:"os" gorm:"type:varchar(100)"`
 	KernelVersion    string    `json:"kernel_version" gorm:"type:varchar(100)"`
 	GpuName          string    `json:"gpu_name" gorm:"type:varchar(100)"`
@@ -87,6 +88,8 @@ type Record struct {
 	NetOut         int64     `json:"net_out" gorm:"type:bigint"`
 	NetTotalUp     int64     `json:"net_total_up" gorm:"type:bigint"`
 	NetTotalDown   int64     `json:"net_total_down" gorm:"type:bigint"`
+	TrafficUp      int64     `json:"traffic_up" gorm:"type:bigint"`
+	TrafficDown    int64     `json:"traffic_down" gorm:"type:bigint"`
 	Process        int       `json:"process"`
 	Connections    int       `json:"connections"`
 	ConnectionsUdp int       `json:"connections_udp"`
@@ -110,9 +113,21 @@ type GPURecord struct {
 type StringArray []string
 
 func (sa *StringArray) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("failed to scan StringArray: value is not []byte")
+	var bytes []byte
+	switch v := value.(type) {
+	case nil:
+		*sa = StringArray{}
+		return nil
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+	default:
+		return fmt.Errorf("failed to scan StringArray: unsupported value type %T", value)
+	}
+	if len(bytes) == 0 {
+		*sa = StringArray{}
+		return nil
 	}
 	return json.Unmarshal(bytes, sa)
 }
