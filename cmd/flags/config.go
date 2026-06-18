@@ -1,6 +1,10 @@
 package flags
 
-import "strings"
+import (
+	"fmt"
+	"log/slog"
+	"strings"
+)
 
 const (
 	DatabaseTypeSQLite   = "sqlite"
@@ -18,7 +22,8 @@ var (
 	DatabasePass string // MySQL/PostgreSQL 数据库密码
 	DatabaseName string // MySQL/PostgreSQL 数据库名称
 
-	Listen string
+	Listen   string
+	LogLevel string // 日志级别：debug, info, warn, error
 )
 
 func NormalizeDatabaseType(databaseType string) string {
@@ -40,4 +45,27 @@ func IsSQLite() bool {
 
 func SupportedDatabaseTypes() string {
 	return DatabaseTypeSQLite + ", " + DatabaseTypeMySQL + ", " + DatabaseTypePostgres
+}
+
+func NormalizeLogLevel(level string) string {
+	level = strings.ToLower(strings.TrimSpace(level))
+	if level == "" {
+		return ""
+	}
+	return level
+}
+
+func ParseLogLevel(level string) (slog.Level, error) {
+	switch NormalizeLogLevel(level) {
+	case "debug":
+		return slog.LevelDebug, nil
+	case "", "info":
+		return slog.LevelInfo, nil
+	case "warn", "warning":
+		return slog.LevelWarn, nil
+	case "error":
+		return slog.LevelError, nil
+	default:
+		return slog.LevelInfo, fmt.Errorf("unsupported log level: %s", level)
+	}
 }

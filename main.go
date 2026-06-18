@@ -5,12 +5,19 @@ import (
 	"log/slog"
 
 	"github.com/komari-monitor/komari/cmd"
+	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/komari-monitor/komari/utils"
 	logutil "github.com/komari-monitor/komari/utils/log"
 )
 
 func main() {
-	if utils.VersionHash == "unknown" {
+	if flags.LogLevel != "" {
+		level, err := flags.ParseLogLevel(flags.LogLevel)
+		if err != nil {
+			log.Fatalf("invalid log level %q: %v", flags.LogLevel, err)
+		}
+		logutil.SetupGlobalLogger(level)
+	} else if utils.VersionHash == "unknown" {
 		logutil.SetupGlobalLogger(slog.LevelDebug)
 	} else {
 		logutil.SetupGlobalLogger(slog.LevelInfo)

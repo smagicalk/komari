@@ -124,6 +124,9 @@ func Run(ctx Context) error {
 	if err := migrateLegacyLoadNotification(db); err != nil {
 		return err
 	}
+	if err := migrateClientNotificationConstraints(db); err != nil {
+		return err
+	}
 	if err := migrateLegacyPingAllClientsExpansion(db); err != nil {
 		return err
 	}
@@ -161,6 +164,39 @@ func migrateLegacyLoadNotification(db *gorm.DB) error {
 	if db.Migrator().HasColumn(&models.LoadNotification{}, "client") {
 		log.Println("[>0.1.4] Rebuilding LoadNotification table....")
 		return db.Migrator().DropTable(&models.LoadNotification{})
+	}
+	return nil
+}
+
+func migrateClientNotificationConstraints(db *gorm.DB) error {
+	for _, migration := range []struct {
+		label      string
+		model      any
+		tableName  string
+		constraint string
+	}{
+		{
+			label:      "offline notification client constraint",
+			model:      &models.OfflineNotification{},
+			tableName:  "offline_notifications",
+			constraint: "ClientInfo",
+		},
+		{
+			label:      "traffic report notification client constraint",
+			model:      &models.TrafficReportNotification{},
+			tableName:  "traffic_report_notifications",
+			constraint: "ClientInfo",
+		},
+	} {
+		if !db.Migrator().HasTable(migration.tableName) {
+			continue
+		}
+		if err := db.Migrator().DropConstraint(migration.model, migration.constraint); err != nil {
+			log.Printf("[%s] drop old constraint skipped: %v", migration.label, err)
+		}
+		if err := db.Migrator().CreateConstraint(migration.model, migration.constraint); err != nil {
+			return fmt.Errorf("recreate %s: %w", migration.label, err)
+		}
 	}
 	return nil
 }

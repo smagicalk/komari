@@ -26,6 +26,7 @@ var (
 	dbUserEnv = GetEnv("KOMARI_DB_USER", "root")
 	dbPassEnv = GetEnv("KOMARI_DB_PASS", "")
 	dbNameEnv = GetEnv("KOMARI_DB_NAME", "komari")
+	logLevel  = GetEnv("KOMARI_LOG_LEVEL", "")
 )
 
 var RootCmd = &cobra.Command{
@@ -55,4 +56,5 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&flags.DatabaseUser, "db-user", dbUserEnv, "MySQL/PostgreSQL database username [env: KOMARI_DB_USER]")
 	RootCmd.PersistentFlags().StringVar(&flags.DatabasePass, "db-pass", dbPassEnv, "MySQL/PostgreSQL database password [env: KOMARI_DB_PASS]")
 	RootCmd.PersistentFlags().StringVar(&flags.DatabaseName, "db-name", dbNameEnv, "MySQL/PostgreSQL database name [env: KOMARI_DB_NAME]")
+	RootCmd.PersistentFlags().StringVar(&flags.LogLevel, "log-level", logLevel, "Log level (debug, info, warn, error) [env: KOMARI_LOG_LEVEL]")
 }
